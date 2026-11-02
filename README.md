@@ -6,59 +6,56 @@
 - Guilherme Pinto Eustáquio - RM 566784
 - Matheus Tavares - RM 566844
 
-Conferir o cadastro oficial do grupo antes do envio.
+## Problema e objetivo
 
-## Proposta
+A tecnologia nuclear ainda é pouco compreendida por parte da sociedade. O Nuclear Akinator utiliza um jogo de adivinhação para apresentar objetos e alimentos do cotidiano e explicar sua relação com a radiação e a tecnologia nuclear.
 
-Controle físico de respostas para o jogo educativo Nuclear Akinator em exposições e salas de aula. O visitante usa três botões (Sim, Não, Não sei), e a tela apresenta perguntas, palpite, confirmação e explicação científica. A proposta é conceitual, como permite o enunciado; não há firmware ou hardware implementado neste pacote.
+## Proposta de aplicação de IoT
 
-## Tecnologias e componentes previstos
+Um controle físico conectado ao jogo permitiria responder por três botões: **Sim, Não e Não sei**. A tela apresentaria perguntas, palpites, confirmação do objeto e explicação científica.
 
-ESP32; três botões; LED de estado; fonte USB e caixa; Wi-Fi 2,4 GHz; MQTT 5/TLS com QoS 1; broker Mosquitto; gateway; serviço de partidas; catálogo Java; Oracle; monitor ou tablet com interface web. Botões capturam a interação. Não se propõe medir radiação.
+O controle seria instalado ao lado de um monitor ou tablet em exposições, feiras de ciências e salas de aula. A proposta é conceitual.
 
-## Caminho dos dados
+## Componentes e funções
 
-![Fluxograma](diagramas/Fluxograma_IoT.png)
+| Componente | Função | Local previsto |
+|---|---|---|
+| ESP32 com Wi-Fi | Ler os botões e transmitir as respostas. | Dentro da caixa do controle. |
+| Três botões físicos | Capturar as escolhas Sim, Não e Não sei. | Painel frontal com texto e símbolos. |
+| LED de estado | Sinalizar conexão, envio pendente e resposta aceita. | Parte superior do controle. |
+| Fonte USB e caixa | Alimentar e proteger a eletrônica. | Mesa, com cabos fixados. |
+| Roteador Wi-Fi 2,4 GHz | Conectar os dispositivos à rede local. | Área de cobertura do espaço educativo. |
+| Computador local | Executar o broker MQTT e o gateway; poderia hospedar os serviços do jogo. | Área técnica do mediador. |
+| Monitor ou tablet | Apresentar perguntas, confirmação e conteúdo educativo. | Ao lado do controle. |
 
-1. ESP32 recebe a pergunta ativa do gateway e habilita os botões.
-2. Botão captura a escolha; firmware aplica debounce e publica JSON no broker.
-3. Gateway valida sessão, pergunta, terminal e evento; duplicatas recebem o mesmo aceite.
-4. Serviço de partidas registra Resposta, atualiza candidatos e apresenta palpite.
-5. Visitante confirma ou corrige o objeto; a explicação vem do catálogo desse objeto confirmado.
-6. LED acusa aceite somente depois da persistência. Em queda de rede, o controle pausa.
+Os botões coletariam as ações do visitante. O LED atuaria como sinalizador. O controle não mediria radiação dos objetos ou alimentos.
 
-Tópico previsto: `nuclear-akinator/terminais/T01/respostas`, sem retain.
+## Comunicação e dados coletados
 
-```json
-{"eventoId":"T01-00042","partidaId":1,"perguntaId":3,"valor":"I","terminalId":"T01"}
-```
+O ESP32 enviaria as escolhas pela rede Wi-Fi usando MQTT com TLS. O broker distribuiria as mensagens ao gateway, responsável por validá-las e encaminhá-las ao serviço de partidas por HTTPS/JSON.
 
-Cache persistente de eventos, autenticação dos terminais e serviço de jogo são componentes futuros. Não fazem parte do banco acadêmico de cinco entidades. O Java existente implementa catálogo de objetos em H2, não o fluxo IoT. .NET poderá assumir Partida/Resposta, sujeito a alinhamento do grupo.
+Cada evento conteria a resposta e os identificadores da partida, da pergunta, do terminal e do próprio evento. O serviço registraria o instante de recebimento e armazenaria a resposta no banco Oracle. O catálogo Java forneceria os objetos e suas explicações científicas.
 
-## IoB e IA generativa
+## Fluxograma de funcionamento
 
-Analisar perguntas com respostas Não sei e abandono de partidas para melhorar a interação. Não interpretar esses dados isolados como prova de aprendizagem. IA generativa é opcional para apoiar rascunhos revisados; a explicação exibida permanece previamente validada.
+![Fluxograma do caminho dos dados](diagramas/Fluxograma_IoT.png)
 
-## Arquivos
+1. O visitante pressiona um dos três botões.
+2. O ESP32 captura a escolha e a transmite pela rede local.
+3. O broker encaminha o evento ao gateway, que valida a sessão e a pergunta e evita gravações duplicadas.
+4. O serviço registra a resposta e atualiza os objetos candidatos. A resposta Não sei é neutra.
+5. A tela apresenta um palpite, e o visitante confirma ou corrige o objeto.
+6. Após a confirmação, a aplicação consulta e exibe a explicação científica do objeto escolhido.
 
-- `Proposta_IoT_Redes.pdf`: documento completo.
-- `diagramas/`: fluxograma em PDF vetorial e PNG.
-- `ROTEIRO_VIDEO.md`: narração e plano visual de aproximadamente cinco minutos.
-- `LINKS_ENTREGA.txt`: preencher com YouTube não listado e GitHub público dos materiais.
-- `Proposta_Editavel.md`: texto para revisão pelo grupo.
+O LED sinalizaria o aceite após o registro da resposta. Se o palpite estivesse incorreto, o jogo permitiria novas perguntas ou a correção do objeto. Em caso de falha de conexão, o controle pausaria e a tela ofereceria respostas por toque ou teclado.
 
-## Entrega
+## Uso dos dados e benefício esperado
 
-Publicar estes materiais no GitHub escolhido pelo grupo e gravar o vídeo. Preencher os dois links reais, remover as indicações de pendência e gerar novamente o ZIP. A consulta ao repositório Java não publica estes arquivos nem cria um repositório para esta disciplina. O ZIP fornecido é uma base de preparação e permanece pendente desses links.
+O motor do jogo utilizaria as respostas para orientar a adivinhação. O visitante receberia o resultado educativo pela tela. O mediador poderia identificar perguntas que geram dúvidas e melhorar seus enunciados.
 
-## Referências
+A aplicação de IoT ofereceria uma interação física compartilhada, sem exigir celular pessoal. A explicação científica permaneceria vinculada ao objeto confirmado pelo visitante.
 
-- FIAP: `2TDS Agosto - Marinha 2026 - 1º Semestre V2 (1).pdf`, fornecido pela equipe. IoT: páginas 29-32; BD: páginas 37-40.
-- Equipe: `Nuclear_Akinator_Projeto.pdf` e `Nuclear_Akinator_Sprint_1_Com_Personagem.pdf`.
-- Java analisado: https://github.com/caioccouto/Nuclear-Akinator/tree/fa3fa1457519b55665c33088cf68fb1a11001069
-- Oracle CREATE TABLE: https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/CREATE-TABLE.html
-- Oracle CREATE SEQUENCE: https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/CREATE-SEQUENCE.html
-- Oracle Data Modeler / Barker: https://docs.oracle.com/en/database/oracle/sql-developer-data-modeler/19.2/dmdug/data-modeler-concepts-usage.html
-- MQTT 5.0 / OASIS: https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html
+## Documentação
 
-Consulta: 02/11/2026. O texto científico de demonstração provém dos documentos da equipe e deverá passar por revisão com fontes específicas antes de uso público.
+- [Proposta de IoT e Redes](Proposta_IoT_Redes.pdf)
+- [Fluxograma em PDF](diagramas/Fluxograma_IoT.pdf)
